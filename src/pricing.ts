@@ -1,6 +1,9 @@
-export type Counts = { macchiato: number; hotsand: number };
+export type Counts = { macchiato: number; hotsand: number; icecoffee: number; hotcoffee: number };
+
+export const emptyCounts = (): Counts => ({ macchiato: 0, hotsand: 0, icecoffee: 0, hotcoffee: 0 });
 
 export const UNIT_PRICE = 300;
+export const COFFEE_PRICE = 200; // セット割引の対象外
 
 /** セット割引。m=マキアート, h=ホットサンドハーフ */
 const BUNDLES = [
@@ -21,12 +24,12 @@ function assertCount(n: number) {
 }
 
 /** セットの使い方を全探索して最安の合計を返す(数量は祭りの規模なら十分小さい) */
-export function calcPrice({ macchiato, hotsand }: Counts): PriceResult {
-  assertCount(macchiato);
-  assertCount(hotsand);
-  const regular = (macchiato + hotsand) * UNIT_PRICE;
+export function calcPrice({ macchiato, hotsand, icecoffee, hotcoffee }: Counts): PriceResult {
+  [macchiato, hotsand, icecoffee, hotcoffee].forEach(assertCount);
+  const coffee = (icecoffee + hotcoffee) * COFFEE_PRICE;
+  const regular = (macchiato + hotsand) * UNIT_PRICE + coffee;
 
-  let best = { total: regular, use: [0, 0, 0] };
+  let best = { total: regular - coffee, use: [0, 0, 0] };
   const maxEach = [Math.floor(hotsand / 2), Math.min(macchiato, hotsand), Math.min(macchiato, Math.floor(hotsand / 2))];
 
   for (let a = 0; a <= maxEach[0]; a++) {
@@ -43,8 +46,8 @@ export function calcPrice({ macchiato, hotsand }: Counts): PriceResult {
 
   return {
     regular,
-    total: best.total,
-    discount: regular - best.total,
+    total: best.total + coffee,
+    discount: regular - coffee - best.total,
     bundles: BUNDLES.map((bd, i) => ({ id: bd.id, label: bd.label, count: best.use[i] })).filter((x) => x.count > 0),
   };
 }
