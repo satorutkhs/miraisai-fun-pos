@@ -1,5 +1,5 @@
 import './style.css';
-import { calcPrice, type Counts } from './pricing';
+import { calcPrice, emptyCounts, type Counts } from './pricing';
 import { keypad, quickAmounts, type Key } from './cash';
 import { createStore, type KV, type Order } from './store';
 
@@ -32,16 +32,19 @@ function loadDraft(): Counts {
   try {
     const d = JSON.parse(kv.getItem(DRAFT_KEY) ?? '{}');
     const ok = (n: unknown) => Number.isInteger(n) && (n as number) >= 0;
-    return { macchiato: ok(d.macchiato) ? d.macchiato : 0, hotsand: ok(d.hotsand) ? d.hotsand : 0 };
+    const n = (v: unknown) => (ok(v) ? (v as number) : 0);
+    return { macchiato: n(d.macchiato), hotsand: n(d.hotsand), icecoffee: n(d.icecoffee), hotcoffee: n(d.hotcoffee) };
   } catch {
-    return { macchiato: 0, hotsand: 0 };
+    return emptyCounts();
   }
 }
 const saveDraft = () => kv.setItem(DRAFT_KEY, JSON.stringify(counts));
 
 const PRODUCTS = [
-  { id: 'macchiato', name: 'マキアート', img: 'img/macchiato.jpg' },
-  { id: 'hotsand', name: 'ホットサンドハーフ', img: 'img/hotsand.jpg' },
+  { id: 'macchiato', name: 'マキアート', price: 300, img: 'img/macchiato.jpg', icon: '' },
+  { id: 'hotsand', name: 'ホットサンドハーフ', price: 300, img: 'img/hotsand.jpg', icon: '' },
+  { id: 'icecoffee', name: 'アイスコーヒー', price: 200, img: '', icon: '🧊☕' },
+  { id: 'hotcoffee', name: 'ホットコーヒー', price: 200, img: '', icon: '☕' },
 ] as const;
 type ProductId = (typeof PRODUCTS)[number]['id'];
 
@@ -50,13 +53,13 @@ function itemHtml(p: (typeof PRODUCTS)[number]): string {
   return `
     <div class="item">
       <div class="photo">
-        <img src="${p.img}" alt="" />
+        ${p.img ? `<img src="${p.img}" alt="" />` : `<div class="noimg ${p.id}">${p.icon}</div>`}
         <button class="tap" data-act="add" data-id="${p.id}" aria-label="${p.name}を追加"></button>
         <div class="badge" data-zero="${n === 0}">${n}</div>
       </div>
       <div class="meta">
         <div class="name">${p.name}</div>
-        <div class="price">¥300</div>
+        <div class="price">${yen(p.price)}</div>
         <button class="minus" data-act="sub" data-id="${p.id}" ${n === 0 ? 'disabled' : ''}>−</button>
       </div>
     </div>`;
@@ -64,10 +67,11 @@ function itemHtml(p: (typeof PRODUCTS)[number]): string {
 
 function sideHtml(): string {
   const price = calcPrice(counts);
-  const empty = counts.macchiato + counts.hotsand === 0;
+  const empty = PRODUCTS.every((p) => counts[p.id] === 0);
   const rows = [
-    counts.macchiato ? `<div class="row"><span>マキアート</span><span>×${counts.macchiato}</span></div>` : '',
-    counts.hotsand ? `<div class="row"><span>ホットサンド</span><span>×${counts.hotsand}</span></div>` : '',
+    ...PRODUCTS.filter((p) => counts[p.id]).map(
+      (p) => `<div class="row"><span>${p.name}</span><span>×${counts[p.id]}</span></div>`,
+    ),
     ...price.bundles.map((b) => `<div class="row disc"><span>${b.label} ×${b.count}</span></div>`),
     price.discount ? `<div class="row disc"><span>セット割引</span><span>−${yen(price.discount)}</span></div>` : '',
   ].join('');
@@ -116,8 +120,7 @@ function doneHtml(o: Order): string {
     <div class="modal"><div class="sheet done">
       <div class="chg">お釣り<b>${yen(o.change)}</b></div>
       <div class="tally">
-        ${o.macchiato ? `<span>マキアート</span><span>${o.macchiato} 個</span>` : ''}
-        ${o.hotsand ? `<span>ホットサンド</span><span>${o.hotsand} 個</span>` : ''}
+        ${PRODUCTS.filter((p) => o[p.id]).map((p) => `<span>${p.name}</span><span>${o[p.id]} 個</span>`).join('')}
         <span>合計</span><span>${yen(o.total)}</span>
       </div>
       <div class="slip">伝票の番号が <b>${o.no}</b> か確認 → 個数を「正」で記入</div>
@@ -135,7 +138,7 @@ function historyHtml(): string {
       const t = new Date(o.at);
       const hm = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
       return `<tr class="${o.voided ? 'void' : ''}">
-        <td>No.${o.no}</td><td>${hm}</td><td>${o.macchiato}</td><td>${o.hotsand}</td><td>${yen(o.total)}</td>
+        <td>No.${o.no}</td><td>${hm}</td><td>${o.macchiato}</td><td>${o.hotsand}</td><td>${o.icecoffee}</td><td>${o.hotcoffee}</td><td>${yen(o.total)}</td>
         <td>${o.voided ? '取消済' : `<button data-act="void" data-no="${o.no}">取消</button>`}</td></tr>`;
     })
     .join('');
@@ -145,9 +148,10 @@ function historyHtml(): string {
       <div class="sum">
         <div>売上<b>${yen(s.sales)}</b></div><div>会計数<b>${s.count}</b></div>
         <div>マキアート<b>${s.macchiato}</b></div><div>ホットサンド<b>${s.hotsand}</b></div>
+        <div>アイスコーヒー<b>${s.icecoffee}</b></div><div>ホットコーヒー<b>${s.hotcoffee}</b></div>
       </div>
-      <table><thead><tr><th>番号</th><th>時刻</th><th>マキ</th><th>HS</th><th>金額</th><th></th></tr></thead>
-      <tbody>${rows || '<tr><td colspan="6">まだ注文はありません</td></tr>'}</tbody></table>
+      <table><thead><tr><th>番号</th><th>時刻</th><th>マキ</th><th>HS</th><th>アイス</th><th>ホット</th><th>金額</th><th></th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="8">まだ注文はありません</td></tr>'}</tbody></table>
       <div class="tools">
         <button data-act="csv">CSV保存</button>
         <button data-act="setnext">次の番号を変更</button>
@@ -192,7 +196,7 @@ document.addEventListener('click', (e) => {
   switch (el.dataset.act) {
     case 'add': counts = { ...counts, [id!]: counts[id!] + 1 }; saveDraft(); break;
     case 'sub': counts = { ...counts, [id!]: Math.max(0, counts[id!] - 1) }; saveDraft(); break;
-    case 'clear': counts = { macchiato: 0, hotsand: 0 }; saveDraft(); break;
+    case 'clear': counts = emptyCounts(); saveDraft(); break;
     case 'pay': screen = { kind: 'pay', received: 0 }; break;
     case 'back': case 'close': screen = { kind: 'order' }; break;
     case 'key': if (screen.kind === 'pay') screen = { kind: 'pay', received: keypad(screen.received, el.dataset.key as Key) }; break;
@@ -201,7 +205,7 @@ document.addEventListener('click', (e) => {
       if (screen.kind !== 'pay') return;
       try {
         const order = store.checkout(counts, screen.received);
-        counts = { macchiato: 0, hotsand: 0 };
+        counts = emptyCounts();
         saveDraft();
         screen = { kind: 'done', order };
       } catch (err) {
