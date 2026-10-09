@@ -27,6 +27,11 @@ describe('quickAmounts', () => {
   it('ちょうどと、合計以上の紙幣・硬貨の切り上げ候補を返す', () => {
     expect(quickAmounts(700)).toEqual([700, 1000, 5000, 10000]);
   });
+  it('合計が500円以下なら500円も候補に出る(ちょうどの隣)', () => {
+    expect(quickAmounts(300)).toEqual([300, 500, 1000, 5000, 10000]);
+    expect(quickAmounts(500)).toEqual([500, 1000, 5000, 10000]);
+    expect(quickAmounts(600)).toEqual([600, 1000, 5000, 10000]);
+  });
   it('合計が1000円ちょうどなら重複しない', () => {
     expect(quickAmounts(1000)).toEqual([1000, 5000, 10000]);
   });
