@@ -93,7 +93,7 @@ button:disabled { opacity: .35; }
 .item .noimg.icecoffee { background: linear-gradient(135deg, #dff1fb, #b9dff3); }
 .sum { grid-template-columns: repeat(3, 1fr); }
 
-/* 6タイル(3列x2行): ミルク/エスプレッソ/アイス・HS/HSキャベツ抜き/HS2個セット */
+/* 5タイル(3列x2行): ミルク/エスプレッソ/アイス・HS/HSキャベツ抜き */
 .main { grid-template-columns: 1fr 340px; }
 .items { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, minmax(0, 1fr)); }
 .item .meta { display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'name name' 'price minus'; gap: 4px 10px; padding: 8px 12px; }
@@ -102,13 +102,5 @@ button:disabled { opacity: .35; }
 .item .minus { grid-area: minus; width: 68px; height: 56px; }
 .item .badge { min-width: 56px; height: 56px; font-size: 32px; }
 .item .noimg { font-size: 64px; }
-.pair { position: relative; display: grid; grid-template-rows: 1fr auto; background: var(--yellow); border: 2px solid var(--line); border-radius: 20px; overflow: hidden; min-height: 0; }
-.pair .tap { display: grid; place-content: center; gap: 6px; text-align: center; background: transparent; padding: 8px; }
-.pair .name { font-size: 22px; font-weight: 900; line-height: 1.25; }
-.pair .hint { font-size: 15px; opacity: .7; }
-.pair .price { font-size: 32px; font-weight: 900; color: var(--red); }
-.pair .minus { margin: 0 12px 8px auto; width: 68px; height: 56px; border-radius: 14px; background: #fff8; font-size: 28px; font-weight: 900; }
-.pair .badge { position: absolute; top: 10px; right: 10px; min-width: 56px; height: 56px; padding: 0 14px; border-radius: 999px; background: var(--red); color: #fff; font-size: 32px; font-weight: 900; display: grid; place-items: center; }
-.pair .badge[data-zero="true"] { display: none; }
 .sum { grid-template-columns: repeat(3, 1fr); }
-@media (max-width: 1100px) { .main { grid-template-columns: 1fr 300px; } .item .name { font-size: 16px; } .pair .name { font-size: 18px; } .total .yen { font-size: 48px; } }
+@media (max-width: 1100px) { .main { grid-template-columns: 1fr 300px; } .item .name { font-size: 16px; } 
