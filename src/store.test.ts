@@ -71,7 +71,7 @@ describe('store', () => {
     const s = createStore(kv, now);
     s.checkout(c({ macchiato: 1, hotsand: 1 }), 500);
     s.checkout(c({ macchiato: 0, hotsand: 2 }), 500);
-    expect(s.summary()).toEqual({ count: 2, sales: 1000, discount: 200, macchiato: 1, hotsand: 3, icecoffee: 0, hotcoffee: 0 });
+    expect(s.summary()).toEqual({ count: 2, sales: 1000, discount: 200, macchiato: 1, hotsand: 3, icecoffee: 0 });
   });
 
   it('壊れた保存データでも落ちずに空で始まる', () => {
@@ -93,16 +93,16 @@ describe('store', () => {
     s.checkout(c({ macchiato: 1, hotsand: 0 }), 500);
     s.void(1);
     const lines = s.toCsv().split('\n');
-    expect(lines[0]).toBe('no,time,macchiato,hotsand,icecoffee,hotcoffee,total,discount,received,change,voided');
-    expect(lines[1]).toBe('1,2026-10-10 10:00:00,1,0,0,0,300,0,500,200,1');
+    expect(lines[0]).toBe('no,time,macchiato,hotsand,icecoffee,total,discount,received,change,voided');
+    expect(lines[1]).toBe('1,2026-10-10 10:00:00,1,0,0,300,0,500,200,1');
   });
 
   it('コーヒーを含む会計と集計', () => {
     const s = createStore(kv, now);
-    const o = s.checkout(c({ macchiato: 1, icecoffee: 2, hotcoffee: 1 }), 1000);
-    expect(o.total).toBe(300 + 600);
-    expect(o.change).toBe(100);
-    expect(s.summary()).toMatchObject({ icecoffee: 2, hotcoffee: 1, sales: 900 });
+    const o = s.checkout(c({ macchiato: 1, icecoffee: 2 }), 1000);
+    expect(o.total).toBe(300 + 400);
+    expect(o.change).toBe(300);
+    expect(s.summary()).toMatchObject({ icecoffee: 2, sales: 700 });
   });
 
   it('コーヒー追加前に保存された注文も0個として読み込める', () => {
@@ -111,7 +111,7 @@ describe('store', () => {
       JSON.stringify([{ no: 1, at: new Date(2026, 9, 10).toISOString(), macchiato: 1, hotsand: 0, total: 300, discount: 0, received: 300, change: 0, voided: false }]),
     );
     const s = createStore(kv, now);
-    expect(s.orders()[0]).toMatchObject({ icecoffee: 0, hotcoffee: 0 });
+    expect(s.orders()[0]).toMatchObject({ icecoffee: 0 });
     expect(s.summary()).toMatchObject({ count: 1, sales: 300, icecoffee: 0 });
   });
 });
