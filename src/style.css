@@ -59,7 +59,7 @@ button:disabled { opacity: .35; }
 .pay .big b { font-size: 56px; font-weight: 900; }
 .pay .big b.change { color: var(--ok); font-size: 72px; }
 .pay .big b.short { color: var(--red); }
-.quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+.quick { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; margin-top: 10px; }
 .quick button { height: 60px; border-radius: 12px; background: var(--yellow); font-size: 22px; font-weight: 800; }
 .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .pad button { height: 78px; border-radius: 14px; background: var(--card); border: 2px solid var(--line); font-size: 34px; font-weight: 800; }
