@@ -43,11 +43,11 @@ function loadDraft(): Counts {
 const saveDraft = () => kv.setItem(DRAFT_KEY, JSON.stringify(counts));
 
 const PRODUCTS = [
-  { id: 'milk', name: 'ミルクマキアート', price: 300, img: 'img/macchiato.jpg', icon: '' },
-  { id: 'espresso', name: 'エスプレッソマキアート', price: 300, img: 'img/macchiato.jpg', icon: '' },
-  { id: 'icecoffee', name: 'アイスコーヒー', price: 200, img: '', icon: '🧊☕' },
-  { id: 'hotsand', name: 'ホットサンドハーフ', price: 300, img: 'img/hotsand.jpg', icon: '' },
-  { id: 'hotsandnc', name: 'ホットサンド キャベツ抜き', price: 300, img: 'img/hotsand.jpg', icon: '' },
+  { id: 'milk', name: 'ミルクマキアート', price: 300, img: 'img/milk.jpg' },
+  { id: 'espresso', name: 'エスプレッソマキアート', price: 300, img: 'img/espresso.jpg' },
+  { id: 'icecoffee', name: 'アイスコーヒー', price: 200, img: 'img/icecoffee.jpg' },
+  { id: 'hotsand', name: 'ホットサンドハーフ', price: 300, img: 'img/hotsand.jpg' },
+  { id: 'hotsandnc', name: 'ホットサンド キャベツ抜き', price: 300, img: 'img/hotsandnc.jpg' },
 ] as const;
 
 function itemHtml(p: (typeof PRODUCTS)[number]): string {
@@ -55,7 +55,7 @@ function itemHtml(p: (typeof PRODUCTS)[number]): string {
   return `
     <div class="item">
       <div class="photo">
-        ${p.img ? `<img src="${p.img}" alt="" />` : `<div class="noimg ${p.id}">${p.icon}</div>`}
+        <img src="${p.img}" alt="" />
         <button class="tap" data-act="add" data-id="${p.id}" aria-label="${p.name}を追加"></button>
         <div class="badge" data-zero="${n === 0}">${n}</div>
       </div>
