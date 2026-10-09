@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { adjust, calcPrice, emptyCounts } from './pricing';
 
-const c = (m: number, h: number, ice = 0) => ({ macchiato: m, hotsand: h, icecoffee: ice });
+const c = (m: number, h: number, ice = 0) => ({ milk: m, espresso: 0, hotsand: h, hotsandnc: 0, icecoffee: ice });
 const total = (m: number, h: number, ice = 0) => calcPrice(c(m, h, ice)).total;
 
 describe('calcPrice', () => {
@@ -71,9 +71,20 @@ describe('calcPrice', () => {
     expect(adjust(c(1, 1), 'hotsand', 2)).toEqual(c(1, 3));
     expect(adjust(c(1, 3), 'hotsand', -2)).toEqual(c(1, 1));
     expect(adjust(c(0, 1), 'hotsand', -2)).toEqual(c(0, 0));
-    expect(adjust(c(2, 0), 'macchiato', -1)).toEqual(c(1, 0));
+    expect(adjust(c(2, 0), 'milk', -1)).toEqual(c(1, 0));
   });
   it('ホットサンドを「2個セット」で足すと500円', () => {
     expect(total(0, adjust(emptyCounts(), 'hotsand', 2).hotsand)).toBe(500);
+  });
+  it('ミルク/エスプレッソ・キャベツ抜きは同じ価格で、セット割引も共通', () => {
+    const mix = (milk: number, espresso: number, hotsand: number, hotsandnc: number) =>
+      calcPrice({ milk, espresso, hotsand, hotsandnc, icecoffee: 0 }).total;
+    expect(mix(0, 1, 0, 0)).toBe(300);
+    expect(mix(0, 1, 0, 1)).toBe(500); // エスプレッソ+キャベツ抜き
+    expect(mix(1, 0, 1, 0)).toBe(500);
+    expect(mix(0, 0, 1, 1)).toBe(500); // 通常+キャベツ抜きでもHS2個
+    expect(mix(0, 0, 0, 2)).toBe(500);
+    expect(mix(1, 1, 1, 1)).toBe(1000);
+    expect(mix(0, 1, 1, 1)).toBe(700);
   });
 });
