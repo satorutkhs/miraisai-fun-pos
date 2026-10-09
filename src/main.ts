@@ -67,20 +67,6 @@ function itemHtml(p: (typeof PRODUCTS)[number]): string {
     </div>`;
 }
 
-function pairHtml(): string {
-  const n = Math.floor(counts.hotsand / 2);
-  return `
-    <div class="pair">
-      <button class="tap" data-act="addpair" aria-label="ホットサンドハーフ2個を追加">
-        <span class="name">ホットサンドハーフ<br />2個セット</span>
-        <span class="hint">1タップで2個追加</span>
-        <span class="price">¥500</span>
-      </button>
-      <button class="minus" data-act="subpair" ${counts.hotsand < 2 ? 'disabled' : ''}>−2</button>
-      <div class="badge" data-zero="${n === 0}">${n}</div>
-    </div>`;
-}
-
 function sideHtml(): string {
   const price = calcPrice(counts);
   const empty = PRODUCTS.every((p) => counts[p.id] === 0);
@@ -191,7 +177,7 @@ function render() {
         <span class="next">次の伝票 No.${store.nextNumber()}</span>
         <button class="menu" data-act="history">売上・履歴</button>
       </header>
-      <main class="main"><section class="items">${PRODUCTS.map(itemHtml).join('')}${pairHtml()}</section>${sideHtml()}</main>
+      <main class="main"><section class="items">${PRODUCTS.map(itemHtml).join('')}</section>${sideHtml()}</main>
     </div>${modal}`;
 }
 
@@ -212,8 +198,6 @@ document.addEventListener('click', (e) => {
   switch (el.dataset.act) {
     case 'add': counts = adjust(counts, id!, 1); saveDraft(); break;
     case 'sub': counts = adjust(counts, id!, -1); saveDraft(); break;
-    case 'addpair': counts = adjust(counts, 'hotsand', 2); saveDraft(); break;
-    case 'subpair': counts = adjust(counts, 'hotsand', -2); saveDraft(); break;
     case 'clear': counts = emptyCounts(); saveDraft(); break;
     case 'pay': screen = { kind: 'pay', received: 0 }; break;
     case 'back': case 'close': screen = { kind: 'order' }; break;
