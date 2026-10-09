@@ -13,13 +13,28 @@
 
 組み合わせは常に最安になるよう自動計算(`src/pricing.ts`)。
 
-## 開発
+## 開発(Mac)
 ```
+cd /Users/satoru/Developer
+git clone git@github.com:satorutkhs/miraisai-fun-pos.git
+cd miraisai-fun-pos
+nvm use          # .nvmrc (Node 22)。なければ nvm install
 npm install
-npm test          # 単体テスト
-npm run dev       # 開発サーバ
-npm run build     # dist/ を生成(PWA)
+npm run dev      # 開発サーバ(同一Wi-Fiのタブレットからも http://<MacのIP>:5173 で確認可)
+npm run check    # 型チェック + テスト(コミット前に)
+npm run build    # dist/ を生成(PWA)
+npm run preview  # ビルド結果の確認(Service Workerはこちらで確認)
 ```
+
+### ブランチの流れ
+```
+git switch main && git pull
+git switch -c feat/○○     # fix/ chore/ も可
+# テストを先に書く → 実装 → npm run check
+git push -u origin feat/○○
+# GitHubでPRを作成 → CIが通ったら main にマージ → 自動でPagesにデプロイ
+```
+`main` に直接pushしない。
 
 ## 本番(タブレット)への入れ方 — 前日までに会場外のWi-Fiで
 1. `main` にpush → GitHub Actions が Pages にデプロイ(リポジトリ Settings → Pages → Source: GitHub Actions)。
