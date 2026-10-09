@@ -34,7 +34,7 @@ function loadDraft(): Counts {
     const d = JSON.parse(kv.getItem(DRAFT_KEY) ?? '{}');
     const ok = (n: unknown) => Number.isInteger(n) && (n as number) >= 0;
     const n = (v: unknown) => (ok(v) ? (v as number) : 0);
-    return { macchiato: n(d.macchiato), hotsand: n(d.hotsand), icecoffee: n(d.icecoffee), hotcoffee: n(d.hotcoffee) };
+    return { macchiato: n(d.macchiato), hotsand: n(d.hotsand), icecoffee: n(d.icecoffee) };
   } catch {
     return emptyCounts();
   }
@@ -45,7 +45,6 @@ const PRODUCTS = [
   { id: 'macchiato', name: 'マキアート', price: 300, img: 'img/macchiato.jpg', icon: '' },
   { id: 'hotsand', name: 'ホットサンドハーフ', price: 300, img: 'img/hotsand.jpg', icon: '' },
   { id: 'icecoffee', name: 'アイスコーヒー', price: 200, img: '', icon: '🧊☕' },
-  { id: 'hotcoffee', name: 'ホットコーヒー', price: 200, img: '', icon: '☕' },
 ] as const;
 
 function itemHtml(p: (typeof PRODUCTS)[number]): string {
@@ -152,7 +151,7 @@ function historyHtml(): string {
       const t = new Date(o.at);
       const hm = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
       return `<tr class="${o.voided ? 'void' : ''}">
-        <td>No.${o.no}</td><td>${hm}</td><td>${o.macchiato}</td><td>${o.hotsand}</td><td>${o.icecoffee}</td><td>${o.hotcoffee}</td><td>${yen(o.total)}</td>
+        <td>No.${o.no}</td><td>${hm}</td><td>${o.macchiato}</td><td>${o.hotsand}</td><td>${o.icecoffee}</td><td>${yen(o.total)}</td>
         <td>${o.voided ? '取消済' : `<button data-act="void" data-no="${o.no}">取消</button>`}</td></tr>`;
     })
     .join('');
@@ -162,10 +161,10 @@ function historyHtml(): string {
       <div class="sum">
         <div>売上<b>${yen(s.sales)}</b></div><div>会計数<b>${s.count}</b></div>
         <div>マキアート<b>${s.macchiato}</b></div><div>ホットサンド<b>${s.hotsand}</b></div>
-        <div>アイスコーヒー<b>${s.icecoffee}</b></div><div>ホットコーヒー<b>${s.hotcoffee}</b></div>
+        <div>アイスコーヒー<b>${s.icecoffee}</b></div>
       </div>
-      <table><thead><tr><th>番号</th><th>時刻</th><th>マキ</th><th>HS</th><th>アイス</th><th>ホット</th><th>金額</th><th></th></tr></thead>
-      <tbody>${rows || '<tr><td colspan="8">まだ注文はありません</td></tr>'}</tbody></table>
+      <table><thead><tr><th>番号</th><th>時刻</th><th>マキ</th><th>HS</th><th>アイス</th><th>金額</th><th></th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="7">まだ注文はありません</td></tr>'}</tbody></table>
       <div class="tools">
         <button data-act="csv">CSV保存</button>
         <button data-act="setnext">次の番号を変更</button>

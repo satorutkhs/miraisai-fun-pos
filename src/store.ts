@@ -11,7 +11,6 @@ export type Order = {
   macchiato: number;
   hotsand: number;
   icecoffee: number;
-  hotcoffee: number;
   total: number;
   discount: number;
   received: number;
@@ -26,7 +25,6 @@ export type Summary = {
   macchiato: number;
   hotsand: number;
   icecoffee: number;
-  hotcoffee: number;
 };
 
 const ORDERS_KEY = 'pos.orders.v1';
@@ -44,7 +42,7 @@ export function createStore(kv: KV, now: () => Date = () => new Date()) {
     try {
       const v = JSON.parse(kv.getItem(ORDERS_KEY) ?? '[]');
       // コーヒー追加前に保存された注文は0個として読む
-      return Array.isArray(v) ? v.map((o) => ({ icecoffee: 0, hotcoffee: 0, ...o })) : [];
+      return Array.isArray(v) ? v.map((o) => ({ icecoffee: 0, ...o })) : [];
     } catch {
       return [];
     }
@@ -73,7 +71,7 @@ export function createStore(kv: KV, now: () => Date = () => new Date()) {
 
     checkout(counts: Counts, received: number): Order {
       const { total, discount } = calcPrice(counts);
-      if (counts.macchiato + counts.hotsand + counts.icecoffee + counts.hotcoffee === 0) throw new Error('empty order');
+      if (counts.macchiato + counts.hotsand + counts.icecoffee === 0) throw new Error('empty order');
       if (!Number.isInteger(received) || received < total) throw new Error('insufficient payment');
       const order: Order = {
         no: next,
@@ -81,7 +79,6 @@ export function createStore(kv: KV, now: () => Date = () => new Date()) {
         macchiato: counts.macchiato,
         hotsand: counts.hotsand,
         icecoffee: counts.icecoffee,
-        hotcoffee: counts.hotcoffee,
         total,
         discount,
         received,
@@ -112,16 +109,15 @@ export function createStore(kv: KV, now: () => Date = () => new Date()) {
             macchiato: s.macchiato + o.macchiato,
             hotsand: s.hotsand + o.hotsand,
             icecoffee: s.icecoffee + o.icecoffee,
-            hotcoffee: s.hotcoffee + o.hotcoffee,
           }),
-          { count: 0, sales: 0, discount: 0, macchiato: 0, hotsand: 0, icecoffee: 0, hotcoffee: 0 },
+          { count: 0, sales: 0, discount: 0, macchiato: 0, hotsand: 0, icecoffee: 0 },
         );
     },
 
     toCsv(): string {
-      const head = 'no,time,macchiato,hotsand,icecoffee,hotcoffee,total,discount,received,change,voided';
+      const head = 'no,time,macchiato,hotsand,icecoffee,total,discount,received,change,voided';
       const rows = orders.map((o) =>
-        [o.no, fmt(new Date(o.at)), o.macchiato, o.hotsand, o.icecoffee, o.hotcoffee, o.total, o.discount, o.received, o.change, o.voided ? 1 : 0].join(','),
+        [o.no, fmt(new Date(o.at)), o.macchiato, o.hotsand, o.icecoffee, o.total, o.discount, o.received, o.change, o.voided ? 1 : 0].join(','),
       );
       return [head, ...rows].join('\n');
     },

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { adjust, calcPrice, emptyCounts } from './pricing';
 
-const c = (m: number, h: number, ice = 0, hot = 0) => ({ macchiato: m, hotsand: h, icecoffee: ice, hotcoffee: hot });
-const total = (m: number, h: number, ice = 0, hot = 0) => calcPrice(c(m, h, ice, hot)).total;
+const c = (m: number, h: number, ice = 0) => ({ macchiato: m, hotsand: h, icecoffee: ice });
+const total = (m: number, h: number, ice = 0) => calcPrice(c(m, h, ice)).total;
 
 describe('calcPrice', () => {
   it('空は0円', () => {
@@ -52,18 +52,17 @@ describe('calcPrice', () => {
     expect(() => calcPrice(c(1.5, 0))).toThrow();
   });
 
-  it('アイスコーヒー・ホットコーヒーは各200円', () => {
-    expect(total(0, 0, 1, 0)).toBe(200);
-    expect(total(0, 0, 0, 1)).toBe(200);
-    expect(total(0, 0, 2, 3)).toBe(1000);
+  it('アイスコーヒーは200円', () => {
+    expect(total(0, 0, 1)).toBe(200);
+    expect(total(0, 0, 5)).toBe(1000);
   });
   it('コーヒーはセット割引の対象外で、他商品の割引に影響しない', () => {
-    expect(total(1, 2, 1, 1)).toBe(700 + 400);
-    expect(total(1, 1, 0, 1)).toBe(500 + 200);
-    const r = calcPrice(c(1, 2, 2, 2));
-    expect(r.regular).toBe(900 + 800);
+    expect(total(1, 2, 1)).toBe(700 + 200);
+    expect(total(1, 1, 1)).toBe(500 + 200);
+    const r = calcPrice(c(1, 2, 2));
+    expect(r.regular).toBe(900 + 400);
     expect(r.discount).toBe(200);
-    expect(r.total).toBe(700 + 800);
+    expect(r.total).toBe(700 + 400);
   });
   it('emptyCounts は全て0', () => {
     expect(emptyCounts()).toEqual(c(0, 0));

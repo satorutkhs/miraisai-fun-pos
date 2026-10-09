@@ -1,6 +1,6 @@
-export type Counts = { macchiato: number; hotsand: number; icecoffee: number; hotcoffee: number };
+export type Counts = { macchiato: number; hotsand: number; icecoffee: number };
 
-export const emptyCounts = (): Counts => ({ macchiato: 0, hotsand: 0, icecoffee: 0, hotcoffee: 0 });
+export const emptyCounts = (): Counts => ({ macchiato: 0, hotsand: 0, icecoffee: 0 });
 
 export type ProductId = keyof Counts;
 
@@ -32,9 +32,9 @@ function assertCount(n: number) {
 }
 
 /** セットの使い方を全探索して最安の合計を返す(数量は祭りの規模なら十分小さい) */
-export function calcPrice({ macchiato, hotsand, icecoffee, hotcoffee }: Counts): PriceResult {
-  [macchiato, hotsand, icecoffee, hotcoffee].forEach(assertCount);
-  const coffee = (icecoffee + hotcoffee) * COFFEE_PRICE;
+export function calcPrice({ macchiato, hotsand, icecoffee }: Counts): PriceResult {
+  [macchiato, hotsand, icecoffee].forEach(assertCount);
+  const coffee = icecoffee * COFFEE_PRICE;
   const regular = (macchiato + hotsand) * UNIT_PRICE + coffee;
 
   let best = { total: regular - coffee, use: [0, 0, 0] };
