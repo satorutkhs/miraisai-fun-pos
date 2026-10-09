@@ -1,5 +1,6 @@
 import './style.css';
-import { calcPrice, emptyCounts, type Counts } from './pricing';
+import { registerSW } from 'virtual:pwa-register';
+import { adjust, calcPrice, emptyCounts, type Counts, type ProductId } from './pricing';
 import { keypad, quickAmounts, type Key } from './cash';
 import { createStore, type KV, type Order } from './store';
 
@@ -46,7 +47,6 @@ const PRODUCTS = [
   { id: 'icecoffee', name: 'アイスコーヒー', price: 200, img: '', icon: '🧊☕' },
   { id: 'hotcoffee', name: 'ホットコーヒー', price: 200, img: '', icon: '☕' },
 ] as const;
-type ProductId = (typeof PRODUCTS)[number]['id'];
 
 function itemHtml(p: (typeof PRODUCTS)[number]): string {
   const n = counts[p.id];
@@ -62,6 +62,20 @@ function itemHtml(p: (typeof PRODUCTS)[number]): string {
         <div class="price">${yen(p.price)}</div>
         <button class="minus" data-act="sub" data-id="${p.id}" ${n === 0 ? 'disabled' : ''}>−</button>
       </div>
+    </div>`;
+}
+
+function pairHtml(): string {
+  const n = Math.floor(counts.hotsand / 2);
+  return `
+    <div class="pair">
+      <button class="tap" data-act="addpair" aria-label="ホットサンドハーフ2個を追加">
+        <span class="name">ホットサンドハーフ 2個セット</span>
+        <span class="hint">1タップで2個追加</span>
+        <span class="price">¥500</span>
+      </button>
+      <button class="minus" data-act="subpair" ${counts.hotsand < 2 ? 'disabled' : ''}>−2</button>
+      <div class="badge" data-zero="${n === 0}">${n}</div>
     </div>`;
 }
 
@@ -175,7 +189,7 @@ function render() {
         <span class="next">次の伝票 No.${store.nextNumber()}</span>
         <button class="menu" data-act="history">売上・履歴</button>
       </header>
-      <main class="main"><section class="items">${PRODUCTS.map(itemHtml).join('')}</section>${sideHtml()}</main>
+      <main class="main"><section class="items">${PRODUCTS.map(itemHtml).join('')}${pairHtml()}</section>${sideHtml()}</main>
     </div>${modal}`;
 }
 
@@ -194,8 +208,10 @@ document.addEventListener('click', (e) => {
   if (!el) return;
   const id = el.dataset.id as ProductId | undefined;
   switch (el.dataset.act) {
-    case 'add': counts = { ...counts, [id!]: counts[id!] + 1 }; saveDraft(); break;
-    case 'sub': counts = { ...counts, [id!]: Math.max(0, counts[id!] - 1) }; saveDraft(); break;
+    case 'add': counts = adjust(counts, id!, 1); saveDraft(); break;
+    case 'sub': counts = adjust(counts, id!, -1); saveDraft(); break;
+    case 'addpair': counts = adjust(counts, 'hotsand', 2); saveDraft(); break;
+    case 'subpair': counts = adjust(counts, 'hotsand', -2); saveDraft(); break;
     case 'clear': counts = emptyCounts(); saveDraft(); break;
     case 'pay': screen = { kind: 'pay', received: 0 }; break;
     case 'back': case 'close': screen = { kind: 'order' }; break;
@@ -238,5 +254,8 @@ const keepAwake = async () => {
 void keepAwake();
 document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && void keepAwake());
 navigator.storage?.persist?.().catch(() => {});
+
+// 新しい版を取得したら自動で再読み込みする(旧版のまま使い続けない)
+registerSW({ immediate: true });
 
 render();

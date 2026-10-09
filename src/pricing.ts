@@ -2,6 +2,14 @@ export type Counts = { macchiato: number; hotsand: number; icecoffee: number; ho
 
 export const emptyCounts = (): Counts => ({ macchiato: 0, hotsand: 0, icecoffee: 0, hotcoffee: 0 });
 
+export type ProductId = keyof Counts;
+
+/** 指定商品の個数を delta だけ増減(0未満にはしない) */
+export const adjust = (counts: Counts, id: ProductId, delta: number): Counts => ({
+  ...counts,
+  [id]: Math.max(0, counts[id] + delta),
+});
+
 export const UNIT_PRICE = 300;
 export const COFFEE_PRICE = 200; // セット割引の対象外
 

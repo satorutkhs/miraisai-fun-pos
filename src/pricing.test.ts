@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calcPrice, emptyCounts } from './pricing';
+import { adjust, calcPrice, emptyCounts } from './pricing';
 
 const c = (m: number, h: number, ice = 0, hot = 0) => ({ macchiato: m, hotsand: h, icecoffee: ice, hotcoffee: hot });
 const total = (m: number, h: number, ice = 0, hot = 0) => calcPrice(c(m, h, ice, hot)).total;
@@ -67,5 +67,14 @@ describe('calcPrice', () => {
   });
   it('emptyCounts は全て0', () => {
     expect(emptyCounts()).toEqual(c(0, 0));
+  });
+  it('adjust は指定商品だけを増減し、0未満にならない', () => {
+    expect(adjust(c(1, 1), 'hotsand', 2)).toEqual(c(1, 3));
+    expect(adjust(c(1, 3), 'hotsand', -2)).toEqual(c(1, 1));
+    expect(adjust(c(0, 1), 'hotsand', -2)).toEqual(c(0, 0));
+    expect(adjust(c(2, 0), 'macchiato', -1)).toEqual(c(1, 0));
+  });
+  it('ホットサンドを「2個セット」で足すと500円', () => {
+    expect(total(0, adjust(emptyCounts(), 'hotsand', 2).hotsand)).toBe(500);
   });
 });
