@@ -60,6 +60,7 @@ function itemHtml(p: (typeof PRODUCTS)[number]): string {
   return `
     <div class="item">
       <div class="photo">
+        ${p.id === 'hotcoffee' ? '<div class="ribbon">ラストセール限定</div>' : ''}
         ${p.img ? `<img src="${p.img}" alt="" />` : `<div class="noimg ${p.id}">☕</div>`}
         <button class="tap" data-act="add" data-id="${p.id}" aria-label="${p.name}を追加"></button>
         <div class="badge" data-zero="${n === 0}">${n}</div>
@@ -84,7 +85,7 @@ function sideHtml(): string {
   ].join('');
   return `
     <aside class="side">
-      <h2>ご注文</h2>
+      <h2>ご注文${store.lastSale() ? ' <span class="sale-tag">ラストセール価格</span>' : ''}</h2>
       <div class="lines">${empty ? '<div class="empty">商品をタップして追加</div>' : rows}</div>
       <div class="total"><span class="label">合計</span><span class="yen">${yen(price.total)}</span></div>
       <div class="actions">
@@ -168,6 +169,21 @@ function historyHtml(): string {
     </div></div>`;
 }
 
+/** ラストセール中に画面上部へ出す「何が変わったか」帯。金額は価格表から作る */
+function saleBarHtml(): string {
+  const chip = (name: string, from: number, to: number) =>
+    `<span class="chip"><span class="cn">${name}</span><s>${yen(from)}</s><b>${yen(to)}</b></span>`;
+  return `
+    <div class="salebar">
+      <span class="tag">ラストセール中</span>
+      ${chip('ホットサンド2個', REGULAR.hs2, LAST_SALE.hs2)}
+      ${chip('マキアート+ホットサンド', REGULAR.mh, LAST_SALE.mh)}
+      ${chip('マキアート+ホットサンド2個', REGULAR.mhh, LAST_SALE.mhh)}
+      <span class="chip new"><span class="cn">ホットコーヒー 販売開始</span><b>${yen(LAST_SALE.coffee)}</b></span>
+      <span class="note">単品・アイスコーヒーは通常価格</span>
+    </div>`;
+}
+
 function render() {
   const modal =
     screen.kind === 'pay' ? payHtml(screen.received)
@@ -175,15 +191,15 @@ function render() {
     : screen.kind === 'history' ? historyHtml()
     : '';
   document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-    <div class="app">
+    <div class="app${store.lastSale() ? ' sale-on' : ''}">
       <header class="top">
         <span class="brand">FUN ROBO LAB</span>
         <span class="sp"></span>
-        ${store.lastSale() ? '<span class="sale">ラストセール価格</span>' : ''}
         <span class="next">次の伝票 No.${store.nextNumber()}</span>
         <button class="menu${store.lastSale() ? ' on' : ''}" data-act="togglesale">ラストセール ${store.lastSale() ? 'ON' : 'OFF'}</button>
         <button class="menu" data-act="history">売上・履歴</button>
       </header>
+      ${store.lastSale() ? saleBarHtml() : ''}
       <main class="main"><section class="items">${visibleProducts().map(itemHtml).join('')}</section>${sideHtml()}</main>
     </div>${modal}`;
 }
