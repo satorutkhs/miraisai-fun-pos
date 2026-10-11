@@ -100,8 +100,23 @@ button:disabled { opacity: .35; }
 .item .minus { grid-area: minus; width: 68px; height: 56px; }
 .item .badge { min-width: 56px; height: 56px; font-size: 32px; }
 .sum { grid-template-columns: repeat(3, 1fr); }
-@media (max-width: 1100px) { .main { grid-template-columns: 1fr 300px; } .item .name { font-size: 16px; } 
-.top .sale { background: var(--red); color: #fff; font-weight: 900; padding: 6px 14px; border-radius: 999px; font-size: 18px; }
+@media (max-width: 1100px) { .main { grid-template-columns: 1fr 300px; } .item .name { font-size: 16px; } .total .yen { font-size: 48px; } }
 .top button.menu.on { background: var(--red); }
 
 .item .noimg { height: 100%; display: grid; place-items: center; font-size: 64px; background: linear-gradient(135deg, #fde3c4, #f3b982); }
+
+/* ラストセール中: 全体を赤枠・赤ヘッダーにして、通常時と一目で区別できるようにする */
+.app { grid-template-rows: auto 1fr; }
+.app.sale-on { grid-template-rows: auto auto 1fr; box-shadow: inset 0 0 0 6px var(--red); }
+.app.sale-on .top { background: #7a1a0a; }
+.app.sale-on .top .next { background: #fff; }
+.salebar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 8px 16px; background: var(--red); color: #fff; }
+.salebar .tag { background: #fff; color: var(--red); font-weight: 900; font-size: 20px; padding: 4px 14px; border-radius: 999px; }
+.salebar .chip { display: inline-flex; align-items: baseline; gap: 8px; background: #0003; border-radius: 12px; padding: 4px 12px; font-size: 16px; font-weight: 700; }
+.salebar .chip s { opacity: .7; }
+.salebar .chip b { font-size: 24px; font-weight: 900; color: var(--yellow); }
+.salebar .chip.new { background: var(--yellow); color: var(--ink); }
+.salebar .chip.new b { color: var(--red); }
+.salebar .note { font-size: 14px; opacity: .85; margin-left: auto; }
+.item .photo .ribbon { position: absolute; top: 10px; left: 10px; z-index: 1; background: var(--red); color: #fff; font-weight: 900; font-size: 16px; padding: 4px 12px; border-radius: 8px; pointer-events: none; }
+.side h2 .sale-tag { background: var(--red); color: #fff; font-size: 14px; padding: 2px 10px; border-radius: 999px; margin-left: 6px; opacity: 1; }
