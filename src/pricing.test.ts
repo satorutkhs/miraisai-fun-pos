@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { adjust, calcPrice, emptyCounts, LAST_SALE, REGULAR } from './pricing';
 
-const c = (m: number, h: number, ice = 0) => ({ milk: m, espresso: 0, hotsand: h, hotsandnc: 0, icecoffee: ice });
+const c = (m: number, h: number, ice = 0) => ({ milk: m, espresso: 0, hotsand: h, hotsandnc: 0, icecoffee: ice, hotcoffee: 0 });
 const total = (m: number, h: number, ice = 0) => calcPrice(c(m, h, ice)).total;
 
 describe('calcPrice', () => {
@@ -78,7 +78,7 @@ describe('calcPrice', () => {
   });
   it('ミルク/エスプレッソ・キャベツ抜きは同じ価格で、セット割引も共通', () => {
     const mix = (milk: number, espresso: number, hotsand: number, hotsandnc: number) =>
-      calcPrice({ milk, espresso, hotsand, hotsandnc, icecoffee: 0 }).total;
+      calcPrice({ milk, espresso, hotsand, hotsandnc, icecoffee: 0, hotcoffee: 0 }).total;
     expect(mix(0, 1, 0, 0)).toBe(300);
     expect(mix(0, 1, 0, 1)).toBe(500); // エスプレッソ+キャベツ抜き
     expect(mix(1, 0, 1, 0)).toBe(500);
@@ -124,5 +124,13 @@ describe('ラストセール価格表', () => {
     const r = last(1, 2);
     expect(r.regular).toBe(900);
     expect(r.discount).toBe(300);
+  });
+
+  it('ホットコーヒーは200円で、セット割引の対象外', () => {
+    const hot = (m: number, h: number, hc: number) => calcPrice({ ...c(m, h), hotcoffee: hc }, LAST_SALE).total;
+    expect(hot(0, 0, 1)).toBe(200);
+    expect(hot(0, 0, 3)).toBe(600);
+    expect(hot(1, 1, 2)).toBe(400 + 400);
+    expect(calcPrice({ ...c(1, 1), hotcoffee: 1, icecoffee: 1 }, LAST_SALE).total).toBe(400 + 400);
   });
 });

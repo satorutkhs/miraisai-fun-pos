@@ -71,7 +71,7 @@ describe('store', () => {
     const s = createStore(kv, now);
     s.checkout(c({ milk: 1, hotsand: 1 }), 500);
     s.checkout(c({ milk: 0, hotsand: 2 }), 500);
-    expect(s.summary()).toEqual({ count: 2, sales: 1000, discount: 200, milk: 1, espresso: 0, hotsand: 3, hotsandnc: 0, icecoffee: 0 });
+    expect(s.summary()).toEqual({ count: 2, sales: 1000, discount: 200, milk: 1, espresso: 0, hotsand: 3, hotsandnc: 0, icecoffee: 0, hotcoffee: 0 });
   });
 
   it('壊れた保存データでも落ちずに空で始まる', () => {
@@ -93,8 +93,8 @@ describe('store', () => {
     s.checkout(c({ milk: 1, hotsand: 0 }), 500);
     s.void(1);
     const lines = s.toCsv().split('\n');
-    expect(lines[0]).toBe('no,time,milk,espresso,hotsand,hotsandnc,icecoffee,total,discount,received,change,voided,sale');
-    expect(lines[1]).toBe('1,2026-10-10 10:00:00,1,0,0,0,0,300,0,500,200,1,0');
+    expect(lines[0]).toBe('no,time,milk,espresso,hotsand,hotsandnc,icecoffee,hotcoffee,total,discount,received,change,voided,sale');
+    expect(lines[1]).toBe('1,2026-10-10 10:00:00,1,0,0,0,0,0,300,0,500,200,1,0');
   });
 
   it('コーヒーを含む会計と集計', () => {
@@ -159,5 +159,25 @@ describe('store', () => {
       JSON.stringify([{ no: 1, at: new Date(2026, 9, 10).toISOString(), milk: 1, espresso: 0, hotsand: 0, hotsandnc: 0, icecoffee: 0, total: 300, discount: 0, received: 300, change: 0, voided: false }]),
     );
     expect(createStore(kv, now).orders()[0].sale).toBe(false);
+  });
+
+  it('ホットコーヒーはラストセール中だけ会計できる', () => {
+    const s = createStore(kv, now);
+    expect(() => s.checkout(c({ hotcoffee: 1 }), 200)).toThrow();
+    expect(s.orders()).toHaveLength(0);
+    s.setLastSale(true);
+    const o = s.checkout(c({ milk: 1, hotsand: 1, hotcoffee: 2 }), 1000);
+    expect(o.total).toBe(400 + 400);
+    expect(o.hotcoffee).toBe(2);
+    expect(s.summary()).toMatchObject({ hotcoffee: 2, sales: 800 });
+    expect(s.toCsv().split('\n')[1]).toMatch(/^1,[^,]+,1,0,1,0,0,2,800,/);
+  });
+
+  it('ホットコーヒー追加前の注文も0個として読み込める', () => {
+    kv.setItem(
+      'pos.orders.v1',
+      JSON.stringify([{ no: 1, at: new Date(2026, 9, 10).toISOString(), milk: 1, espresso: 0, hotsand: 0, hotsandnc: 0, icecoffee: 0, total: 300, discount: 0, received: 300, change: 0, voided: false, sale: false }]),
+    );
+    expect(createStore(kv, now).orders()[0].hotcoffee).toBe(0);
   });
 });

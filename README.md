@@ -27,8 +27,9 @@ https://satorutkhs.github.io/miraisai-fun-pos/
 | ホットサンドハーフ2個 | 500円 | 400円 |
 | マキアート+ホットサンドハーフ | 500円 | 400円 |
 | マキアート+ホットサンドハーフ2個 | 700円 | 600円 |
+| ホットコーヒー(ラストセール中のみ販売) | - | 200円 |
 
-価格表は `src/pricing.ts` の `REGULAR` / `LAST_SALE`。CSVの `sale` 列が1ならラストセール価格での会計。
+価格表は `src/pricing.ts` の `REGULAR` / `LAST_SALE`。CSVの `sale` 列が1ならラストセール価格での会計。ホットコーヒーはON中だけタイルが出て、OFFに戻すと入力中の分も消える(セット割引の対象外)。
 
 ## 開発(Mac)
 ```

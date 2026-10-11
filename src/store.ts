@@ -13,6 +13,7 @@ export type Order = {
   hotsand: number;
   hotsandnc: number;
   icecoffee: number;
+  hotcoffee: number;
   total: number;
   discount: number;
   received: number;
@@ -30,6 +31,7 @@ export type Summary = {
   hotsand: number;
   hotsandnc: number;
   icecoffee: number;
+  hotcoffee: number;
 };
 
 const ORDERS_KEY = 'pos.orders.v1';
@@ -50,7 +52,7 @@ export function createStore(kv: KV, now: () => Date = () => new Date()) {
       const v = JSON.parse(kv.getItem(ORDERS_KEY) ?? '[]');
       if (!Array.isArray(v)) return [];
       // 旧形式の注文を読めるようにする: コーヒー追加前は0個、マキアートが1種類だった頃はミルクとして扱う
-      return v.map(({ macchiato, ...o }) => ({ milk: macchiato ?? 0, espresso: 0, hotsandnc: 0, icecoffee: 0, sale: false, ...o }));
+      return v.map(({ macchiato, ...o }) => ({ milk: macchiato ?? 0, espresso: 0, hotsandnc: 0, icecoffee: 0, hotcoffee: 0, sale: false, ...o }));
     } catch {
       return [];
     }
@@ -85,6 +87,7 @@ export function createStore(kv: KV, now: () => Date = () => new Date()) {
 
     checkout(counts: Counts, received: number): Order {
       const { total, discount } = calcPrice(counts, lastSale ? LAST_SALE : REGULAR);
+      if (counts.hotcoffee > 0 && !lastSale) throw new Error('hot coffee is last-sale only');
       if (Object.values(counts).every((n) => n === 0)) throw new Error('empty order');
       if (!Number.isInteger(received) || received < total) throw new Error('insufficient payment');
       const order: Order = {
@@ -95,6 +98,7 @@ export function createStore(kv: KV, now: () => Date = () => new Date()) {
         hotsand: counts.hotsand,
         hotsandnc: counts.hotsandnc,
         icecoffee: counts.icecoffee,
+        hotcoffee: counts.hotcoffee,
         total,
         discount,
         received,
@@ -128,15 +132,16 @@ export function createStore(kv: KV, now: () => Date = () => new Date()) {
             hotsand: s.hotsand + o.hotsand,
             hotsandnc: s.hotsandnc + o.hotsandnc,
             icecoffee: s.icecoffee + o.icecoffee,
+            hotcoffee: s.hotcoffee + o.hotcoffee,
           }),
-          { count: 0, sales: 0, discount: 0, milk: 0, espresso: 0, hotsand: 0, hotsandnc: 0, icecoffee: 0 },
+          { count: 0, sales: 0, discount: 0, milk: 0, espresso: 0, hotsand: 0, hotsandnc: 0, icecoffee: 0, hotcoffee: 0 },
         );
     },
 
     toCsv(): string {
-      const head = 'no,time,milk,espresso,hotsand,hotsandnc,icecoffee,total,discount,received,change,voided,sale';
+      const head = 'no,time,milk,espresso,hotsand,hotsandnc,icecoffee,hotcoffee,total,discount,received,change,voided,sale';
       const rows = orders.map((o) =>
-        [o.no, fmt(new Date(o.at)), o.milk, o.espresso, o.hotsand, o.hotsandnc, o.icecoffee, o.total, o.discount, o.received, o.change, o.voided ? 1 : 0, o.sale ? 1 : 0].join(','),
+        [o.no, fmt(new Date(o.at)), o.milk, o.espresso, o.hotsand, o.hotsandnc, o.icecoffee, o.hotcoffee, o.total, o.discount, o.received, o.change, o.voided ? 1 : 0, o.sale ? 1 : 0].join(','),
       );
       return [head, ...rows].join('\n');
     },

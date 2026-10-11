@@ -1,7 +1,7 @@
 /** milk/espresso=マキアート2種, hotsand/hotsandnc=ホットサンドハーフ(通常/キャベツ抜き)。同価格で割引は種類をまたいで共通 */
-export type Counts = { milk: number; espresso: number; hotsand: number; hotsandnc: number; icecoffee: number };
+export type Counts = { milk: number; espresso: number; hotsand: number; hotsandnc: number; icecoffee: number; hotcoffee: number };
 
-export const emptyCounts = (): Counts => ({ milk: 0, espresso: 0, hotsand: 0, hotsandnc: 0, icecoffee: 0 });
+export const emptyCounts = (): Counts => ({ milk: 0, espresso: 0, hotsand: 0, hotsandnc: 0, icecoffee: 0, hotcoffee: 0 });
 
 export type ProductId = keyof Counts;
 
@@ -11,7 +11,7 @@ export const adjust = (counts: Counts, id: ProductId, delta: number): Counts => 
   [id]: Math.max(0, counts[id] + delta),
 });
 
-/** 価格表。unit=マキアート/ホットサンドの単品, hs2/mh/mhh=セット価格, coffee=アイスコーヒー(セット割引の対象外) */
+/** 価格表。unit=マキアート/ホットサンドの単品, hs2/mh/mhh=セット価格, coffee=アイス/ホットコーヒー(セット割引の対象外。ホットはラストセール中のみ販売) */
 export type PriceTable = { unit: number; hs2: number; mh: number; mhh: number; coffee: number };
 
 export const REGULAR: PriceTable = { unit: 300, hs2: 500, mh: 500, mhh: 700, coffee: 200 };
@@ -37,12 +37,12 @@ function assertCount(n: number) {
 }
 
 /** セットの使い方を全探索して最安の合計を返す(数量は祭りの規模なら十分小さい) */
-export function calcPrice({ milk, espresso, hotsand, hotsandnc, icecoffee }: Counts, table: PriceTable = REGULAR): PriceResult {
-  [milk, espresso, hotsand, hotsandnc, icecoffee].forEach(assertCount);
+export function calcPrice({ milk, espresso, hotsand, hotsandnc, icecoffee, hotcoffee }: Counts, table: PriceTable = REGULAR): PriceResult {
+  [milk, espresso, hotsand, hotsandnc, icecoffee, hotcoffee].forEach(assertCount);
   const macchiato = milk + espresso;
   hotsand += hotsandnc;
   const { unit, coffee: coffeePrice } = table;
-  const coffee = icecoffee * coffeePrice;
+  const coffee = (icecoffee + hotcoffee) * coffeePrice;
   const regular = (macchiato + hotsand) * unit + coffee;
 
   let best = { total: regular - coffee, use: [0, 0, 0] };

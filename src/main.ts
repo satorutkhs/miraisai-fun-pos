@@ -35,7 +35,7 @@ function loadDraft(): Counts {
     const ok = (n: unknown) => Number.isInteger(n) && (n as number) >= 0;
     const n = (v: unknown) => (ok(v) ? (v as number) : 0);
     // 旧形式の下書き(macchiato のみ)はミルクとして読む
-    return { milk: n(d.milk) || n(d.macchiato), espresso: n(d.espresso), hotsand: n(d.hotsand), hotsandnc: n(d.hotsandnc), icecoffee: n(d.icecoffee) };
+    return { milk: n(d.milk) || n(d.macchiato), espresso: n(d.espresso), hotsand: n(d.hotsand), hotsandnc: n(d.hotsandnc), icecoffee: n(d.icecoffee), hotcoffee: store.lastSale() ? n(d.hotcoffee) : 0 };
   } catch {
     return emptyCounts();
   }
@@ -49,14 +49,18 @@ const PRODUCTS = [
   { id: 'icecoffee', name: 'アイスコーヒー', price: 200, img: 'img/icecoffee.jpg' },
   { id: 'hotsand', name: 'ホットサンドハーフ', price: 300, img: 'img/hotsand.jpg' },
   { id: 'hotsandnc', name: 'ホットサンド キャベツ抜き', price: 300, img: 'img/hotsandnc.jpg' },
+  { id: 'hotcoffee', name: 'ホットコーヒー', price: 200, img: '' }, // ラストセール中のみ販売
 ] as const;
+
+// ホットコーヒーはラストセール中のみ表示・販売
+const visibleProducts = () => PRODUCTS.filter((p) => p.id !== 'hotcoffee' || store.lastSale());
 
 function itemHtml(p: (typeof PRODUCTS)[number]): string {
   const n = counts[p.id];
   return `
     <div class="item">
       <div class="photo">
-        <img src="${p.img}" alt="" />
+        ${p.img ? `<img src="${p.img}" alt="" />` : `<div class="noimg ${p.id}">☕</div>`}
         <button class="tap" data-act="add" data-id="${p.id}" aria-label="${p.name}を追加"></button>
         <div class="badge" data-zero="${n === 0}">${n}</div>
       </div>
@@ -70,7 +74,7 @@ function itemHtml(p: (typeof PRODUCTS)[number]): string {
 
 function sideHtml(): string {
   const price = calcPrice(counts, table());
-  const empty = PRODUCTS.every((p) => counts[p.id] === 0);
+  const empty = visibleProducts().every((p) => counts[p.id] === 0);
   const rows = [
     ...PRODUCTS.filter((p) => counts[p.id]).map(
       (p) => `<div class="row"><span>${p.name}</span><span>×${counts[p.id]}</span></div>`,
@@ -141,7 +145,7 @@ function historyHtml(): string {
       const t = new Date(o.at);
       const hm = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
       return `<tr class="${o.voided ? 'void' : ''}">
-        <td>No.${o.no}</td><td>${hm}</td><td>${o.milk}</td><td>${o.espresso}</td><td>${o.hotsand}</td><td>${o.hotsandnc}</td><td>${o.icecoffee}</td><td>${yen(o.total)}</td>
+        <td>No.${o.no}</td><td>${hm}</td><td>${o.milk}</td><td>${o.espresso}</td><td>${o.hotsand}</td><td>${o.hotsandnc}</td><td>${o.icecoffee}</td><td>${o.hotcoffee}</td><td>${yen(o.total)}</td>
         <td>${o.voided ? '取消済' : `<button data-act="void" data-no="${o.no}">取消</button>`}</td></tr>`;
     })
     .join('');
@@ -151,10 +155,10 @@ function historyHtml(): string {
       <div class="sum">
         <div>売上<b>${yen(s.sales)}</b></div><div>会計数<b>${s.count}</b></div>
         <div>ミルクマキアート<b>${s.milk}</b></div><div>エスプレッソマキアート<b>${s.espresso}</b></div><div>ホットサンド<b>${s.hotsand}</b></div><div>HSキャベツ抜き<b>${s.hotsandnc}</b></div>
-        <div>アイスコーヒー<b>${s.icecoffee}</b></div>
+        <div>アイスコーヒー<b>${s.icecoffee}</b></div><div>ホットコーヒー<b>${s.hotcoffee}</b></div>
       </div>
-      <table><thead><tr><th>番号</th><th>時刻</th><th>ミルク</th><th>エスプ</th><th>HS</th><th>HS抜</th><th>アイス</th><th>金額</th><th></th></tr></thead>
-      <tbody>${rows || '<tr><td colspan="9">まだ注文はありません</td></tr>'}</tbody></table>
+      <table><thead><tr><th>番号</th><th>時刻</th><th>ミルク</th><th>エスプ</th><th>HS</th><th>HS抜</th><th>アイス</th><th>ホット</th><th>金額</th><th></th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="10">まだ注文はありません</td></tr>'}</tbody></table>
       <div class="tools">
         <button data-act="csv">CSV保存</button>
         <button data-act="setnext">次の番号を変更</button>
@@ -180,7 +184,7 @@ function render() {
         <button class="menu${store.lastSale() ? ' on' : ''}" data-act="togglesale">ラストセール ${store.lastSale() ? 'ON' : 'OFF'}</button>
         <button class="menu" data-act="history">売上・履歴</button>
       </header>
-      <main class="main"><section class="items">${PRODUCTS.map(itemHtml).join('')}</section>${sideHtml()}</main>
+      <main class="main"><section class="items">${visibleProducts().map(itemHtml).join('')}</section>${sideHtml()}</main>
     </div>${modal}`;
 }
 
@@ -222,9 +226,12 @@ document.addEventListener('click', (e) => {
     case 'togglesale': {
       const on = !store.lastSale();
       const msg = on
-        ? 'ラストセール価格に切り替えます。\nホットサンド2個 ¥400 / マキアート+ホットサンド ¥400 / マキアート+ホットサンド2個 ¥600\n(今の入力中の注文にも適用)'
-        : '通常価格に戻します。';
-      if (confirm(msg)) store.setLastSale(on);
+        ? 'ラストセール価格に切り替えます。\nホットサンド2個 ¥400 / マキアート+ホットサンド ¥400 / マキアート+ホットサンド2個 ¥600\nホットコーヒー ¥200 を販売開始\n(今の入力中の注文にも適用)'
+        : '通常価格に戻します。\n(ホットコーヒーの販売は終了)';
+      if (confirm(msg)) {
+        store.setLastSale(on);
+        if (!on && counts.hotcoffee) { counts = { ...counts, hotcoffee: 0 }; saveDraft(); } // ホットは通常価格では販売しない
+      }
       break;
     }
     case 'history': screen = { kind: 'history' }; break;
