@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { adjust, calcPrice, emptyCounts } from './pricing';
+import { adjust, calcPrice, emptyCounts, LAST_SALE, REGULAR } from './pricing';
 
 const c = (m: number, h: number, ice = 0) => ({ milk: m, espresso: 0, hotsand: h, hotsandnc: 0, icecoffee: ice });
 const total = (m: number, h: number, ice = 0) => calcPrice(c(m, h, ice)).total;
@@ -86,5 +86,43 @@ describe('calcPrice', () => {
     expect(mix(0, 0, 0, 2)).toBe(500);
     expect(mix(1, 1, 1, 1)).toBe(1000);
     expect(mix(0, 1, 1, 1)).toBe(700);
+  });
+});
+
+describe('ラストセール価格表', () => {
+  const last = (m: number, h: number, ice = 0) => calcPrice(c(m, h, ice), LAST_SALE);
+  it('価格表を省略すると通常価格', () => {
+    expect(calcPrice(c(1, 2))).toEqual(calcPrice(c(1, 2), REGULAR));
+  });
+  it('単品は据え置き、セットが下がる', () => {
+    expect(last(1, 0).total).toBe(300);
+    expect(last(0, 1).total).toBe(300);
+    expect(last(0, 2).total).toBe(400);
+    expect(last(1, 1).total).toBe(400);
+    expect(last(1, 2).total).toBe(600);
+  });
+  it('2個目以降のセットにも割引が効く', () => {
+    expect(last(2, 2).total).toBe(800);
+    expect(last(0, 4).total).toBe(800);
+    expect(last(0, 3).total).toBe(700);
+    expect(last(2, 4).total).toBe(1200);
+    expect(last(1, 3).total).toBe(800); // セット400+HS2個400
+  });
+  it('アイスコーヒーは割引対象外で200円', () => {
+    expect(last(1, 1, 2).total).toBe(400 + 400);
+  });
+  it('全ての金額が100円単位で、通常価格以下', () => {
+    for (let m = 0; m <= 8; m++) {
+      for (let h = 0; h <= 8; h++) {
+        const l = last(m, h).total;
+        expect(l % 100).toBe(0);
+        expect(l).toBeLessThanOrEqual(calcPrice(c(m, h)).total);
+      }
+    }
+  });
+  it('割引額は単品300円換算との差', () => {
+    const r = last(1, 2);
+    expect(r.regular).toBe(900);
+    expect(r.discount).toBe(300);
   });
 });

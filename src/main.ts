@@ -1,6 +1,6 @@
 import './style.css';
 import { registerSW } from 'virtual:pwa-register';
-import { adjust, calcPrice, emptyCounts, type Counts, type ProductId } from './pricing';
+import { adjust, calcPrice, emptyCounts, LAST_SALE, REGULAR, type Counts, type ProductId } from './pricing';
 import { keypad, quickAmounts, type Key } from './cash';
 import { createStore, type KV, type Order } from './store';
 
@@ -40,6 +40,7 @@ function loadDraft(): Counts {
     return emptyCounts();
   }
 }
+const table = () => (store.lastSale() ? LAST_SALE : REGULAR);
 const saveDraft = () => kv.setItem(DRAFT_KEY, JSON.stringify(counts));
 
 const PRODUCTS = [
@@ -68,7 +69,7 @@ function itemHtml(p: (typeof PRODUCTS)[number]): string {
 }
 
 function sideHtml(): string {
-  const price = calcPrice(counts);
+  const price = calcPrice(counts, table());
   const empty = PRODUCTS.every((p) => counts[p.id] === 0);
   const rows = [
     ...PRODUCTS.filter((p) => counts[p.id]).map(
@@ -90,7 +91,7 @@ function sideHtml(): string {
 }
 
 function payHtml(received: number): string {
-  const { total } = calcPrice(counts);
+  const { total } = calcPrice(counts, table());
   const enough = received >= total;
   const keys = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '00', 'back']
     .map((k) => `<button data-act="key" data-key="${k}">${k === 'back' ? '⌫' : k}</button>`)
@@ -174,7 +175,9 @@ function render() {
       <header class="top">
         <span class="brand">FUN ROBO LAB</span>
         <span class="sp"></span>
+        ${store.lastSale() ? '<span class="sale">ラストセール価格</span>' : ''}
         <span class="next">次の伝票 No.${store.nextNumber()}</span>
+        <button class="menu${store.lastSale() ? ' on' : ''}" data-act="togglesale">ラストセール ${store.lastSale() ? 'ON' : 'OFF'}</button>
         <button class="menu" data-act="history">売上・履歴</button>
       </header>
       <main class="main"><section class="items">${PRODUCTS.map(itemHtml).join('')}</section>${sideHtml()}</main>
@@ -216,6 +219,14 @@ document.addEventListener('click', (e) => {
       break;
     }
     case 'next': screen = { kind: 'order' }; break;
+    case 'togglesale': {
+      const on = !store.lastSale();
+      const msg = on
+        ? 'ラストセール価格に切り替えます。\nホットサンド2個 ¥400 / マキアート+ホットサンド ¥400 / マキアート+ホットサンド2個 ¥600\n(今の入力中の注文にも適用)'
+        : '通常価格に戻します。';
+      if (confirm(msg)) store.setLastSale(on);
+      break;
+    }
     case 'history': screen = { kind: 'history' }; break;
     case 'void': {
       const no = Number(el.dataset.no);
