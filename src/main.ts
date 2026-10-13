@@ -44,12 +44,12 @@ const table = () => (store.lastSale() ? LAST_SALE : REGULAR);
 const saveDraft = () => kv.setItem(DRAFT_KEY, JSON.stringify(counts));
 
 const PRODUCTS = [
-  { id: 'milk', name: 'ミルクマキアート', price: 300, img: 'img/milk.jpg' },
-  { id: 'espresso', name: 'エスプレッソマキアート', price: 300, img: 'img/espresso.jpg' },
-  { id: 'icecoffee', name: 'アイスコーヒー', price: 200, img: 'img/icecoffee.jpg' },
-  { id: 'hotsand', name: 'ホットサンドハーフ', price: 300, img: 'img/hotsand.jpg' },
-  { id: 'hotsandnc', name: 'ホットサンド キャベツ抜き', price: 300, img: 'img/hotsandnc.jpg' },
-  { id: 'hotcoffee', name: 'ホットコーヒー', price: 200, img: '' }, // ラストセール中のみ販売
+  { id: 'milk', name: 'ミルクマキアート', kind: 'unit', img: 'img/milk.jpg' },
+  { id: 'espresso', name: 'エスプレッソマキアート', kind: 'unit', img: 'img/espresso.jpg' },
+  { id: 'icecoffee', name: 'アイスコーヒー', kind: 'coffee', img: 'img/icecoffee.jpg' },
+  { id: 'hotsand', name: 'ホットサンドハーフ', kind: 'unit', img: 'img/hotsand.jpg' },
+  { id: 'hotsandnc', name: 'ホットサンド キャベツ抜き', kind: 'unit', img: 'img/hotsandnc.jpg' },
+  { id: 'hotcoffee', name: 'ホットコーヒー', kind: 'coffee', img: '' }, // ラストセール中のみ販売
 ] as const;
 
 // ホットコーヒーはラストセール中のみ表示・販売
@@ -67,7 +67,7 @@ function itemHtml(p: (typeof PRODUCTS)[number]): string {
       </div>
       <div class="meta">
         <div class="name">${p.name}</div>
-        <div class="price">${yen(p.price)}</div>
+        <div class="price">${yen(table()[p.kind])}</div>
         <button class="minus" data-act="sub" data-id="${p.id}" ${n === 0 ? 'disabled' : ''}>−</button>
       </div>
     </div>`;
@@ -242,7 +242,7 @@ document.addEventListener('click', (e) => {
     case 'togglesale': {
       const on = !store.lastSale();
       const msg = on
-        ? 'ラストセール価格に切り替えます。\nホットサンド2個 ¥400 / マキアート+ホットサンド ¥400 / マキアート+ホットサンド2個 ¥600\nホットコーヒー ¥200 を販売開始\n(今の入力中の注文にも適用)'
+        ? `ラストセール価格に切り替えます。\nホットサンド2個 ${yen(LAST_SALE.hs2)} / マキアート+ホットサンド ${yen(LAST_SALE.mh)} / マキアート+ホットサンド2個 ${yen(LAST_SALE.mhh)}\nホットコーヒー ${yen(LAST_SALE.coffee)} を販売開始\n(今の入力中の注文にも適用)`
         : '通常価格に戻します。\n(ホットコーヒーの販売は終了)';
       if (confirm(msg)) {
         store.setLastSale(on);
